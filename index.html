@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pedido de Folha de Açúcar – Espatullare</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── TOKENS (extraídos do site real espatullare.com.br) ── */
+    :root {
+      --white:      #ffffff;
+      --bg:         #f9f7f5;
+      --bg-card:    #ffffff;
+      --ink:        #1a1a1a;
+      --ink-mid:    #555555;
+      --ink-light:  #888888;
+      --border:     #e0dbd5;
+      --border-lt:  #ede9e4;
+      --accent:     #ba8fee;   /* terracota quente — cor de destaque do site */
+      --accent-lt:  #f3ecfd;
+      --accent-dk:  #9b6fe0;
+      --pink:       #d4b5f7;   /* tom secundário das fotos de produto */
+      --success:    #4a7c59;
+      --error:      #b94a48;
+      --radius:     4px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 300;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── TOP BAR (igual ao site) ── */
+    .topbar {
+      background: var(--ink);
+      color: #fff;
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      padding: 8px 16px;
+      text-transform: uppercase;
+      font-weight: 400;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      text-align: center;
+    }
+    .logo-wrap img {
+      height: 56px;
+      object-fit: contain;
+    }
+    /* fallback se a imagem não carregar */
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 400;
+      letter-spacing: 0.16em;
+      color: var(--ink);
+      text-transform: uppercase;
+      display: none; /* mostrado via JS se img falhar */
+    }
+    .header-sub {
+      margin-top: 6px;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+    }
+
+    /* ── PAGE TITLE BAND ── */
+    .page-band {
+      background: var(--accent-lt);
+      border-top: 2px solid var(--pink);
+      border-bottom: 2px solid var(--pink);
+      text-align: center;
+      padding: 28px 24px 24px;
+    }
+    .page-band h1 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 400;
+      font-size: clamp(22px, 4vw, 32px);
+      color: var(--ink);
+      letter-spacing: 0.04em;
+    }
+    .page-band p {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--ink-mid);
+      max-width: 540px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.7;
+    }
+
+    /* ── FORM WRAPPER ── */
+    .form-outer {
+      max-width: 700px;
+      margin: 36px auto 64px;
+      padding: 0 20px;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 28px 24px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-lt);
+    }
+
+    /* ── FIELD ── */
+    .field { margin-bottom: 18px; }
+    .field:last-child { margin-bottom: 0; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    .req { color: var(--accent); margin-left: 2px; }
+    .hint {
+      font-size: 11px;
+      color: var(--ink-light);
+      margin-bottom: 6px;
+      font-style: italic;
+    }
+
+    /* two-col */
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media(max-width:520px){ .row2 { grid-template-columns: 1fr; } }
+
+    /* ── INPUTS ── */
+    input[type="text"],
+    input[type="tel"],
+    input[type="date"],
+    textarea,
+    select {
+      width: 100%;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 13px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--ink);
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(192,120,80,.13);
+    }
+    input.invalid, textarea.invalid {
+      border-color: var(--error);
+    }
+    textarea { resize: vertical; min-height: 88px; }
+
+    /* ── RADIO ── */
+    .radio-group { display: flex; flex-direction: column; gap: 8px; }
+    .radio-opt {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 300;
+      background: var(--white);
+      transition: border-color .15s, background .15s;
+      user-select: none;
+    }
+    .radio-opt:hover { border-color: var(--accent); }
+    .radio-opt.active { border-color: var(--accent); background: var(--accent-lt); }
+    .radio-opt input { accent-color: var(--accent); width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* radio inline (para urgência) */
+    .radio-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .radio-row .radio-opt { flex: 1; min-width: 140px; }
+
+    /* ── UPLOAD ── */
+    .upload-zone {
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      padding: 30px 20px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: border-color .18s, background .18s;
+    }
+    .upload-zone:hover, .upload-zone.over {
+      border-color: var(--accent);
+      background: var(--accent-lt);
+    }
+    .upload-zone input {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .upload-icon { font-size: 26px; margin-bottom: 8px; }
+    .upload-zone p { font-size: 12px; color: var(--ink-mid); }
+    .upload-zone strong { color: var(--accent); font-weight: 500; }
+
+    #chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+    .chip {
+      background: var(--accent-lt);
+      border: 1px solid var(--pink);
+      border-radius: 20px;
+      padding: 4px 11px;
+      font-size: 11px;
+      display: flex; align-items: center; gap: 6px;
+      color: var(--ink);
+    }
+    .chip button {
+      background: none; border: none; cursor: pointer;
+      color: var(--ink-light); font-size: 14px; line-height: 1; padding: 0;
+    }
+    .chip button:hover { color: var(--error); }
+
+    /* ── TERMS ── */
+    .terms-box {
+      background: var(--accent-lt);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 16px;
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--ink);
+      margin-bottom: 14px;
+    }
+    .checkbox-row {
+      display: flex; align-items: center; gap: 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 11px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      background: var(--white);
+    }
+    .checkbox-row input { accent-color: var(--accent); width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* ── ERRORS ── */
+    .ferr {
+      color: var(--error);
+      font-size: 11px;
+      margin-top: 5px;
+      display: none;
+    }
+
+    /* ── SUBMIT ── */
+    .btn-submit {
+      display: block; width: 100%;
+      margin-top: 24px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 15px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background .18s;
+    }
+    .btn-submit:hover:not(:disabled) { background: var(--accent-dk); }
+    .btn-submit:disabled { background: var(--border); cursor: not-allowed; }
+
+    /* ── STATUS ── */
+    #status {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      display: none;
+    }
+    #status.loading { background: var(--accent-lt); border: 1px solid var(--pink); color: var(--ink); display: block; }
+    #status.error   { background: #fdf0f0; border: 1px solid #e8b4b2; color: var(--error); display: block; }
+
+    /* ── SUCCESS ── */
+    #success {
+      display: none;
+      max-width: 540px;
+      margin: 80px auto 60px;
+      padding: 0 20px;
+      text-align: center;
+    }
+    #success .icon { font-size: 48px; margin-bottom: 16px; }
+    #success h2 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 400;
+      font-size: 26px;
+      color: var(--ink);
+      margin-bottom: 12px;
+    }
+    #success p { font-size: 14px; color: var(--ink-mid); line-height: 1.75; }
+    #success a {
+      display: inline-block; margin-top: 24px;
+      color: var(--accent); font-size: 12px; font-weight: 500;
+      letter-spacing: 0.1em; text-decoration: none; text-transform: uppercase;
+      border-bottom: 1px solid var(--accent); padding-bottom: 2px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--ink);
+      color: #aaa;
+      text-align: center;
+      padding: 20px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+    footer a { color: var(--pink); text-decoration: none; }
+
+    /* ── MOBILE ── */
+    @media(max-width:480px){
+      .card { padding: 20px 16px; }
+      .form-outer { padding: 0 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">Frete grátis para compras acima de R$200</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo-wrap">
+    <img
+      src="https://acdn-us.mitiendanube.com/stores/002/019/738/themes/common/logo-49545408-1643764120-9556426ce158fdbd3452d2e3027e94cc1643764121-480-0.png?0"
+      alt="Espatullare"
+      onerror="this.style.display='none'; document.querySelector('.logo-text').style.display='block';"
+    />
+    <div class="logo-text">Espatullare</div>
+  </div>
+  <div class="header-sub">Florianópolis · SC</div>
+</header>
+
+<!-- PAGE BAND -->
+<div class="page-band">
+  <h1>Pedido de Folha de Açúcar</h1>
+  <p>Preencha as informações abaixo para iniciarmos sua arte. Após receber seu formulário, entraremos em contato para confirmar detalhes, valor e prazo de entrega.</p>
+</div>
+
+<!-- FORM -->
+<div class="form-outer" id="form-section">
+<form id="form" novalidate>
+
+  <!-- CARD 1: IDENTIFICAÇÃO -->
+  <div class="card">
+    <div class="card-title">Identificação</div>
+
+    <div class="field">
+      <label>Já pediu com a gente antes?<span class="req">*</span></label>
+      <div class="radio-group" id="rg-pedido_anterior">
+        <label class="radio-opt"><input type="radio" name="pedido_anterior" value="SIM"> Sim, já pedi antes</label>
+        <label class="radio-opt"><input type="radio" name="pedido_anterior" value="Não, é meu primeiro pedido"> Não, é meu primeiro pedido</label>
+      </div>
+      <div class="ferr" id="err-pedido_anterior">Selecione uma opção.</div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label for="nome">Nome Completo<span class="req">*</span></label>
+        <input type="text" id="nome" name="nome" placeholder="Seu nome" autocomplete="name"/>
+        <div class="ferr" id="err-nome">Informe seu nome.</div>
+      </div>
+      <div class="field">
+        <label for="telefone">Telefone / WhatsApp<span class="req">*</span></label>
+        <input type="tel" id="telefone" name="telefone" placeholder="(48) 99999-9999"/>
+        <div class="ferr" id="err-telefone">Informe um telefone.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD 2: SOBRE A ENCOMENDA -->
+  <div class="card">
+    <div class="card-title">Sobre a Encomenda</div>
+
+    <div class="field">
+      <label for="ocasiao">Para qual ocasião é a encomenda?<span class="req">*</span></label>
+      <div class="hint">Ex: aniversário, casamento, chá de bebê, formatura, páscoa…</div>
+      <input type="text" id="ocasiao" name="ocasiao" placeholder="Ex: Aniversário de 1 ano"/>
+      <div class="ferr" id="err-ocasiao">Informe a ocasião.</div>
+    </div>
+
+    <div class="field">
+      <label for="doce">Para qual doce?<span class="req">*</span></label>
+      <div class="hint">Se for bolo: informe diâmetro e altura. Se for doce: informe o tamanho.</div>
+      <input type="text" id="doce" name="doce" placeholder="Ex: Bolo 20cm de diâmetro × 10cm de altura"/>
+      <div class="ferr" id="err-doce">Informe o tipo e tamanho.</div>
+    </div>
+
+    <div class="field">
+      <label for="tema">Tema ou identidade visual<span class="req">*</span></label>
+      <div class="hint">Ex: Patrulha Canina, floral rose gold, minimalista branco e dourado…</div>
+      <input type="text" id="tema" name="tema" placeholder="Descreva o tema"/>
+      <div class="ferr" id="err-tema">Informe o tema.</div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label for="cores">Cores principais<span class="req">*</span></label>
+        <div class="hint">Ex: azul royal, dourado e branco</div>
+        <input type="text" id="cores" name="cores" placeholder="Ex: Rosa bebê e dourado"/>
+        <div class="ferr" id="err-cores">Informe as cores.</div>
+      </div>
+      <div class="field">
+        <label for="nome_homenageado">Nome ou idade na arte?<span class="req">*</span></label>
+        <div class="hint">Ou escreva "Não" se não quiser.</div>
+        <input type="text" id="nome_homenageado" name="nome_homenageado" placeholder="Ex: Maria, 1 aninho"/>
+        <div class="ferr" id="err-nome_homenageado">Preencha este campo.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD 3: DATAS & ENTREGA -->
+  <div class="card">
+    <div class="card-title">Datas &amp; Entrega</div>
+
+    <div class="row2">
+      <div class="field">
+        <label for="data_evento">Data do evento<span class="req">*</span></label>
+        <input type="date" id="data_evento" name="data_evento"/>
+        <div class="ferr" id="err-data_evento">Informe a data do evento.</div>
+      </div>
+      <div class="field">
+        <label for="data_entrega">Data desejada para entrega<span class="req">*</span></label>
+        <input type="date" id="data_entrega" name="data_entrega"/>
+        <div class="ferr" id="err-data_entrega">Informe a data de entrega.</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Urgência do pedido<span class="req">*</span></label>
+      <div class="radio-row" id="rg-urgencia">
+        <label class="radio-opt"><input type="radio" name="urgencia" value="Para esta semana"> Para esta semana</label>
+        <label class="radio-opt"><input type="radio" name="urgencia" value="Para a próxima semana"> Para a próxima semana</label>
+        <label class="radio-opt"><input type="radio" name="urgencia" value="Data flexível"> Data flexível</label>
+      </div>
+      <div class="ferr" id="err-urgencia">Selecione a urgência.</div>
+    </div>
+
+    <div class="field">
+      <label for="cep">CEP para entrega<span class="req">*</span></label>
+      <div class="hint">Usaremos para calcular prazo e valor do frete antes de te contatar.</div>
+      <input type="text" id="cep" name="cep" placeholder="00000-000" maxlength="9" style="max-width:180px"/>
+      <div class="ferr" id="err-cep">Informe o CEP.</div>
+    </div>
+  </div>
+
+  <!-- CARD 4: REFERÊNCIAS -->
+  <div class="card">
+    <div class="card-title">Referências &amp; Observações</div>
+
+    <div class="field">
+      <label>Fotos e referências</label>
+      <div class="hint">Quanto melhor a qualidade, melhor a arte! Aceito: JPG, PNG, PDF. Máx. 10 MB por arquivo.</div>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="fotos" multiple accept="image/*,.pdf"/>
+        <div class="upload-icon">🖼️</div>
+        <p><strong>Clique para selecionar</strong> ou arraste as imagens aqui</p>
+        <p style="font-size:11px;margin-top:3px;color:var(--ink-light)">JPG · PNG · PDF · até 10 MB</p>
+      </div>
+      <div id="chips"></div>
+    </div>
+
+    <div class="field">
+      <label for="obs">Observações</label>
+      <div class="hint">Nome do homenageado, idade, frases ou qualquer detalhe importante. Pode deixar em branco.</div>
+      <textarea id="obs" name="observacoes" placeholder="Escreva aqui…"></textarea>
+    </div>
+  </div>
+
+  <!-- CARD 5: CONFIRMAÇÃO -->
+  <div class="card">
+    <div class="card-title">Confirmação</div>
+
+    <div class="terms-box">
+      ✅ <strong>Entraremos em contato em até 24h úteis</strong> para confirmar quantidade, valor, prazo de entrega e pagamento.<br/>
+      ✅ <strong>A produção começa somente após pagamento confirmado.</strong>
+    </div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" id="concordo"/>
+      Concordo com os termos acima
+    </label>
+    <div class="ferr" id="err-concordo">Você precisa concordar para enviar.</div>
+
+    <button type="submit" class="btn-submit" id="btn">Enviar Pedido</button>
+    <div id="status"></div>
+  </div>
+
+</form>
+</div>
+
+<!-- SUCCESS -->
+<div id="success">
+  <div class="icon">🌸</div>
+  <h2>Pedido recebido!</h2>
+  <p>
+    Obrigada pelo seu pedido.<br/>
+    Entraremos em contato em até <strong>24h úteis</strong> para confirmar todos os detalhes, valor e prazo de entrega.<br/><br/>
+    Qualquer dúvida, fale com a gente pelo WhatsApp. 💛
+  </p>
+  <a href="https://espatullare.com.br">← Voltar à loja</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  © Espatullare · Florianópolis – SC ·
+  <a href="https://espatullare.com.br">espatullare.com.br</a>
+</footer>
+
+<script>
+  // ── RADIO HIGHLIGHT ──
+  document.querySelectorAll('.radio-group, .radio-row').forEach(grp => {
+    grp.querySelectorAll('input[type="radio"]').forEach(r => {
+      r.addEventListener('change', () => {
+        grp.querySelectorAll('.radio-opt').forEach(o => o.classList.remove('active'));
+        r.closest('.radio-opt').classList.add('active');
+      });
+    });
+  });
+
+  // ── FILE UPLOAD ──
+  let files = [];
+  const fileInput  = document.getElementById('fotos');
+  const chipsEl    = document.getElementById('chips');
+  const uploadZone = document.getElementById('upload-zone');
+
+  function renderChips() {
+    chipsEl.innerHTML = '';
+    files.forEach((f, i) => {
+      const c = document.createElement('div');
+      c.className = 'chip';
+      c.innerHTML = `📎 ${f.name} <button type="button" data-i="${i}">×</button>`;
+      chipsEl.appendChild(c);
+    });
+    chipsEl.querySelectorAll('button').forEach(b => {
+      b.onclick = () => { files.splice(+b.dataset.i, 1); renderChips(); };
+    });
+  }
+
+  function addFiles(newFiles) {
+    Array.from(newFiles).forEach(f => {
+      if (f.size > 10 * 1024 * 1024) { alert(`"${f.name}" ultrapassa 10 MB e não foi adicionado.`); return; }
+      if (!files.find(x => x.name === f.name && x.size === f.size)) files.push(f);
+    });
+    renderChips();
+    fileInput.value = '';
+  }
+
+  fileInput.addEventListener('change', () => addFiles(fileInput.files));
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('over'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault(); uploadZone.classList.remove('over');
+    addFiles(e.dataTransfer.files);
+  });
+
+  // ── CEP MASK ──
+  document.getElementById('cep').addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g,'').replace(/^(\d{5})(\d)/,'$1-$2').slice(0,9);
+  });
+
+  // ── VALIDATE ──
+  function req(id) {
+    const el = document.getElementById(id);
+    const empty = !el.value.trim();
+    document.getElementById('err-' + id).style.display = empty ? 'block' : 'none';
+    el.classList.toggle('invalid', empty);
+    return !empty;
+  }
+  function reqRadio(name) {
+    const ok = !!document.querySelector(`input[name="${name}"]:checked`);
+    document.getElementById('err-' + name).style.display = ok ? 'none' : 'block';
+    return ok;
+  }
+
+  function validate() {
+    let ok = true;
+    ['nome','telefone','ocasiao','doce','tema','cores','nome_homenageado','data_evento','data_entrega','cep'].forEach(f => { if(!req(f)) ok=false; });
+    ['pedido_anterior','urgencia'].forEach(n => { if(!reqRadio(n)) ok=false; });
+    const ch = document.getElementById('concordo');
+    const chOk = ch.checked;
+    document.getElementById('err-concordo').style.display = chOk ? 'none' : 'block';
+    if (!chOk) ok = false;
+    return ok;
+  }
+
+  // ── SUBMIT ──
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz6evWAxBO8tsi1lUCaqtzACUQlQSeC8LRhiunZzbt_Y0ERDtdCQTdD2eLeUH7AoH1a/exec';
+
+  document.getElementById('form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    if (!validate()) { document.querySelector('.ferr[style*="block"]')?.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+
+    const btn = document.getElementById('btn');
+    const status = document.getElementById('status');
+    btn.disabled = true; btn.textContent = 'Enviando…';
+    status.className = 'loading'; status.textContent = '⏳ Enviando seu pedido, aguarde…';
+
+    try {
+      const fd = new FormData();
+      const radioFields = ['pedido_anterior','urgencia'];
+      const textFields  = ['nome','telefone','ocasiao','doce','tema','cores',
+                           'nome_homenageado','data_evento','data_entrega','cep'];
+
+      radioFields.forEach(n => {
+        const ch = document.querySelector(`input[name="${n}"]:checked`);
+        fd.append(n, ch ? ch.value : '');
+      });
+      textFields.forEach(id => fd.append(id, document.getElementById(id).value));
+      fd.append('observacoes', document.getElementById('obs').value);
+      files.forEach(f => fd.append('fotos', f));
+
+      const res  = await fetch(SCRIPT_URL, { method: 'POST', body: fd });
+      const json = await res.json();
+
+      if (json.status === 'ok') {
+        document.getElementById('form-section').style.display = 'none';
+        document.getElementById('success').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else throw new Error(json.message);
+    } catch {
+      status.className = 'error';
+      status.textContent = '❌ Não foi possível enviar. Tente novamente ou entre em contato pelo WhatsApp.';
+      btn.disabled = false; btn.textContent = 'Enviar Pedido';
+    }
+  });
+</script>
+</body>
+</html>
