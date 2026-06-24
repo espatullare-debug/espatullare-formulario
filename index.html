@@ -637,20 +637,48 @@
     status.className = 'loading'; status.textContent = '⏳ Enviando seu pedido, aguarde…';
 
     try {
-      const fd = new FormData();
-      const radioFields = ['pedido_anterior','urgencia'];
-      const textFields  = ['nome','telefone','ocasiao','doce','tema','cores',
-                           'nome_homenageado','data_evento','data_entrega','cep'];
+      // Converter imagens para base64
+      async function toBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve({
+            name: file.name,
+            type: file.type,
+            data: reader.result.split(',')[1]
+          });
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
 
-      radioFields.forEach(n => {
-        const ch = document.querySelector(`input[name="${n}"]:checked`);
-        fd.append(n, ch ? ch.value : '');
+      const fotosB64 = await Promise.all(files.map(toBase64));
+
+      const radioVal = (name) => {
+        const ch = document.querySelector(`input[name="${name}"]:checked`);
+        return ch ? ch.value : '';
+      };
+
+      const payload = {
+        pedido_anterior:  radioVal('pedido_anterior'),
+        nome:             document.getElementById('nome').value,
+        telefone:         document.getElementById('telefone').value,
+        ocasiao:          document.getElementById('ocasiao').value,
+        doce:             document.getElementById('doce').value,
+        tema:             document.getElementById('tema').value,
+        cores:            document.getElementById('cores').value,
+        nome_homenageado: document.getElementById('nome_homenageado').value,
+        data_evento:      document.getElementById('data_evento').value,
+        data_entrega:     document.getElementById('data_entrega').value,
+        urgencia:         radioVal('urgencia'),
+        cep:              document.getElementById('cep').value,
+        observacoes:      document.getElementById('obs').value,
+        fotos:            fotosB64,
+      };
+
+      const res  = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload),
       });
-      textFields.forEach(id => fd.append(id, document.getElementById(id).value));
-      fd.append('observacoes', document.getElementById('obs').value);
-      files.forEach(f => fd.append('fotos', f));
-
-      const res  = await fetch(SCRIPT_URL, { method: 'POST', body: fd });
       const json = await res.json();
 
       if (json.status === 'ok') {
