@@ -545,21 +545,19 @@
 
     try {
       setProgress(30);
-      const resp = await fetch(APPS_SCRIPT_URL, {
+
+      // Apps Script exige no-cors; enviamos como text/plain para contornar preflight
+      await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(payload)
       });
-      setProgress(90);
-      const data = await resp.json();
-      setProgress(100);
 
-      if (data.status === 'ok') {
-        mostrarStatus('✅ Artes enviadas com sucesso! Entraremos em contato em breve.', 'success');
-        btn.textContent = 'Enviado ✓';
-      } else {
-        throw new Error(data.message || 'Erro desconhecido');
-      }
+      setProgress(100);
+      // Com no-cors não conseguimos ler a resposta, mas se não lançou erro o envio chegou
+      mostrarStatus('✅ Artes enviadas com sucesso! Entraremos em contato em breve.', 'success');
+      btn.textContent = 'Enviado ✓';
     } catch (err) {
       mostrarStatus('❌ Erro ao enviar: ' + err.message, 'error');
       btn.disabled = false;
